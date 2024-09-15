@@ -1,8 +1,13 @@
 provider "aws" {
   region = local.region
+  default_tags {
+    tags = {
+      Environment = "commercial"
+      Name        = "tofu commercial environment provider tag"
+    }
+  }
 }
 
-### added this for the sake of istio  ############
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
@@ -14,7 +19,6 @@ provider "kubernetes" {
     args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
   }
 }
-######### ########################################
 
 provider "helm" {
   kubernetes {
@@ -37,14 +41,10 @@ locals {
   name       = basename(path.cwd)
   region     = "us-east-1"
   account_id = data.aws_caller_identity.current.account_id
-
+  
   vpc_cidr = "10.0.0.0/16"
+  vpc_cidr_2 = "10.1.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  ### added a second CIDR ###
-  secondary_cidr = "10.1.0.0/16"
-  ###############################
-
   #### added istio ####
   istio_chart_url     = "https://istio-release.storage.googleapis.com/charts"
   istio_chart_version = "1.20.2"
@@ -52,7 +52,7 @@ locals {
   karpenter_tag_key = "karpenter.sh/discovery/${local.name}"
 
   tags = {
-    intelli    = local.name
+    intelligi  = local.name
     GithubRepo = "aws-ia/terraform-aws-eks-blueprints-addon"
   }
 }
@@ -251,7 +251,7 @@ module "disabled" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.16"
+  version = "~> 20.11" #"~> 19.16"
 
   cluster_name                   = local.name
   cluster_version                = "1.30"
@@ -261,7 +261,7 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   eks_managed_node_groups = {
-    initial = {
+    intelligi = {
       instance_types = ["m5.large"]
 
       min_size     = 1
@@ -294,10 +294,33 @@ module "eks" {
       type                          = "ingress"
       source_cluster_security_group = true
     }
+
+    ingress_allow_access_from_control_plane_webhook = {
+      type                          = "ingress"
+      protocol                      = "tcp"
+      from_port                     = 9443
+      to_port                       = 9443
+      source_cluster_security_group = true
+      description                   = "Allow access from control plane to webhook port of AWS load balancer controller"
+    },
+    ingress_allow_access_from_control_plane_metrics = {
+      type                          = "ingress"
+      protocol                      = "tcp"
+      from_port                     = 4443
+      to_port                       = 4443
+      source_cluster_security_group = true
+      description                   = "Allow access from control plane to metrics server AWS load balancer controller"
+    }
   }
   ####### added  rules for istio above  #########################################
 }
-
+##### VPC MODULE  ####################
+######### Add the second CIDR block to the existing VPC ###################
+resource "aws_vpc_ipv4_cidr_block_association" "secondary_cidr" {
+  vpc_id    = module.vpc.vpc_id  # The VPC created by the module
+  cidr_block = local.vpc_cidr_2  # Secondary CIDR Block ("10.1.0.0/16")
+}
+######### ##################################################################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
@@ -305,14 +328,11 @@ module "vpc" {
   name = local.name
   cidr = local.vpc_cidr
 
-  ### Added secondary CIDR ###
-  secondary_cidr_blocks = [local.secondary_cidr]
-  #############################
   azs             = local.azs
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"] #[for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets  = ["10.0.48.0/24", "10.0.49.0/24", "10.0.50.0/24"] #[for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-  database_subnets     = ["10.0.77.0/24", "10.0.78.0/24", "10.0.79.0/24", "10.1.15.0/24"]  # added this subnet [100.0.1.0/24] for secondary cidr
-
+  # Using the vpc_cidr_2 block for database subnets
+  database_subnets     = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]  # Subnets for the secondary CIDR
   enable_nat_gateway = true
   single_nat_gateway = true
 
@@ -331,7 +351,7 @@ module "vpc" {
 
 resource "aws_iam_instance_profile" "karpenters" {
   name = "KarpenterNodeInstanceProfile-${local.name}"
-  role = module.eks.eks_managed_node_groups["initial"].iam_role_name
+  role = module.eks.eks_managed_node_groups["intelligi"].iam_role_name
 
   tags = local.tags
 }
@@ -405,7 +425,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
 
   statement {
     actions   = ["iam:PassRole"]
-    resources = [module.eks.eks_managed_node_groups["initial"].iam_role_arn]
+    resources = [module.eks.eks_managed_node_groups["intelligi"].iam_role_arn]
   }
 }
 
