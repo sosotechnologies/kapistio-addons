@@ -40,6 +40,11 @@ locals {
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  ### added a second CIDR ###
+  secondary_cidr = "10.1.0.0/16"
+  ###############################
+
   #### added istio ####
   istio_chart_url     = "https://istio-release.storage.googleapis.com/charts"
   istio_chart_version = "1.20.2"
@@ -300,9 +305,13 @@ module "vpc" {
   name = local.name
   cidr = local.vpc_cidr
 
+  ### Added secondary CIDR ###
+  secondary_cidr_blocks = [local.secondary_cidr]
+  #############################
   azs             = local.azs
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"] #[for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets  = ["10.0.48.0/24", "10.0.49.0/24", "10.0.50.0/24"] #[for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+  database_subnets     = ["10.0.77.0/24", "10.0.78.0/24", "10.0.79.0/24", "10.1.15.0/24"]  # added this subnet [100.0.1.0/24] for secondary cidr
 
   enable_nat_gateway = true
   single_nat_gateway = true
