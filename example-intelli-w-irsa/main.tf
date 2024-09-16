@@ -2,6 +2,12 @@ provider "aws" {
   region = local.region
 }
 
+# Provider for ECR (for Karpenter)
+provider "aws" {
+  alias  = "ecr"
+  region = "us-east-1"
+}
+
 ### added this for the sake of istio  ############
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint

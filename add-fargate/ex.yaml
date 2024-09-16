@@ -1,0 +1,14 @@
+apiVersion: eks.amazonaws.com/v1alpha1
+kind: FargateProfile
+metadata:
+  name: karpenter-fargate-profile
+  namespace: karpenter
+spec:
+  selectors:
+    - namespace: karpenter
+      labels:
+        environment: fargate
+  podExecutionRoleArn: arn:aws:iam::123456789012:role/fargate-execution-role
+  subnets:
+    - subnet-xxxxxxxxxxxxxxxxx
+    - subnet-xxxxxxxxxxxxxxxxx
