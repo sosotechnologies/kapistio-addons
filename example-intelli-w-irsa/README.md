@@ -1,100 +1,132 @@
 # Amazon EKS Blueprints Addon Tests
 
 Configuration in this directory provisions:
-- An EKS cluster and VPC used to support the example
+- An EKS cluster and VPC 
 - An addon (Helm release) for [`metrics-server`](https://github.com/kubernetes-sigs/metrics-server) without an IAM role for service account (IRSA)
 - An addon (Helm release) for [`karpenter`](https://github.com/aws/karpenter) with an IAM role for service account (IRSA)
+- An addon (Helm release) for [`Istio`](https://github.com/aws/karpenter) 
+  * Install Istio Ingress Gateway using Helm resources in tofu
+  * This step deploys a Service of type `LoadBalancer` that creates an AWS Network Load Balancer.
+  * Deploy/Validate Istio communication using sample application
 - An IAM role for service account (IRSA) suitable for use by the [AWS VPC-CNI](https://github.com/aws/amazon-vpc-cni-k8s)
+
+Refer to the [documentation](https://istio.io/latest/docs/concepts/) on Istio
+concepts.
 
 ## Usage
 
 To run this example you need to execute:
 
 ```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
+$ tofu init
+$ tofu plan
+$ tofu apply #--auto-approve
 ```
 
-Note that this example may create resources which will incur monetary charges on your AWS bill. Run `terraform destroy` when you no longer need these resources.
+###  For Istio
+Once the resources have been provisioned, you will need to replace the `istio-ingress` pods due to a [`istiod` dependency issue](https://github.com/istio/istio/issues/35789). Use the following command to perform a rolling restart of the `istio-ingress` pods:
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-## Requirements
+```sh
+kubectl rollout restart deployment istio-ingress -n istio-ingress
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.47 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9 |
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+```
 
-## Providers
+#### Other Istio OPTIONAL Addons - Observability Add-ons
 
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.47 |
+Use the following code snippet to add the Istio Observability Add-ons on the EKS
+cluster with deployed Istio.
 
-## Modules
+```sh
+for ADDON in kiali jaeger prometheus grafana
+do
+    ADDON_URL="https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/$ADDON.yaml"
+    kubectl apply -f $ADDON_URL
+done
+```
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_disabled"></a> [disabled](#module\_disabled) | ../ | n/a |
-| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 19.16 |
-| <a name="module_helm_release_irsa"></a> [helm\_release\_irsa](#module\_helm\_release\_irsa) | ../ | n/a |
-| <a name="module_helm_release_only"></a> [helm\_release\_only](#module\_helm\_release\_only) | ../ | n/a |
-| <a name="module_irsa_only"></a> [irsa\_only](#module\_irsa\_only) | ../ | n/a |
-| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
+***Validate***
 
-## Resources
+1. List out all pods and services in the `istio-system` namespace:
 
-| Name | Type |
-|------|------|
-| [aws_iam_instance_profile.karpenter](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.karpenter_controller](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.karpenter_controller](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+    ```sh
+    kubectl get pods,svc -n istio-system
+    kubectl get pods,svc -n istio-ingress
+    ```
 
-## Inputs
+    ```text
+    NAME                             READY   STATUS    RESTARTS   AGE
+    pod/grafana-7d4f5589fb-4xj9m     1/1     Running   0          4m14s
+    pod/istiod-ff577f8b8-c8ssk       1/1     Running   0          4m40s
+    pod/jaeger-58c79c85cd-n7bkx      1/1     Running   0          4m14s
+    pod/kiali-749d76d7bb-8kjg7       1/1     Running   0          4m14s
+    pod/prometheus-5d5d6d6fc-s1txl   2/2     Running   0          4m15s
 
-No inputs.
+    NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                                 AGE
+    service/grafana            ClusterIP   172.20.141.12    <none>        3000/TCP                                4m14s
+    service/istiod             ClusterIP   172.20.172.70    <none>        15010/TCP,15012/TCP,443/TCP,15014/TCP   4m40s
+    service/jaeger-collector   ClusterIP   172.20.223.28    <none>        14268/TCP,14250/TCP,9411/TCP            4m15s
+    service/kiali              ClusterIP   172.20.182.231   <none>        20001/TCP,9090/TCP                      4m15s
+    service/prometheus         ClusterIP   172.20.89.64     <none>        9090/TCP                                4m14s
+    service/tracing            ClusterIP   172.20.253.201   <none>        80/TCP,16685/TCP                        4m14s
+    service/zipkin             ClusterIP   172.20.221.157   <none>        9411/TCP                                4m15s
 
-## Outputs
+    NAME                                 READY   STATUS    RESTARTS   AGE
+    pod/istio-ingress-6f7c5dffd8-g1szr   1/1     Running   0          4m28s
 
-| Name | Description |
-|------|-------------|
-| <a name="output_helm_release_irsa_app_version"></a> [helm\_release\_irsa\_app\_version](#output\_helm\_release\_irsa\_app\_version) | The version number of the application being deployed |
-| <a name="output_helm_release_irsa_chart"></a> [helm\_release\_irsa\_chart](#output\_helm\_release\_irsa\_chart) | The name of the chart |
-| <a name="output_helm_release_irsa_iam_role_arn"></a> [helm\_release\_irsa\_iam\_role\_arn](#output\_helm\_release\_irsa\_iam\_role\_arn) | ARN of IAM role |
-| <a name="output_helm_release_irsa_iam_role_name"></a> [helm\_release\_irsa\_iam\_role\_name](#output\_helm\_release\_irsa\_iam\_role\_name) | Name of IAM role |
-| <a name="output_helm_release_irsa_iam_role_path"></a> [helm\_release\_irsa\_iam\_role\_path](#output\_helm\_release\_irsa\_iam\_role\_path) | Path of IAM role |
-| <a name="output_helm_release_irsa_iam_role_unique_id"></a> [helm\_release\_irsa\_iam\_role\_unique\_id](#output\_helm\_release\_irsa\_iam\_role\_unique\_id) | Unique ID of IAM role |
-| <a name="output_helm_release_irsa_name"></a> [helm\_release\_irsa\_name](#output\_helm\_release\_irsa\_name) | Name is the name of the release |
-| <a name="output_helm_release_irsa_namespace"></a> [helm\_release\_irsa\_namespace](#output\_helm\_release\_irsa\_namespace) | Name of Kubernetes namespace |
-| <a name="output_helm_release_irsa_revision"></a> [helm\_release\_irsa\_revision](#output\_helm\_release\_irsa\_revision) | Version is an int32 which represents the version of the release |
-| <a name="output_helm_release_irsa_values"></a> [helm\_release\_irsa\_values](#output\_helm\_release\_irsa\_values) | The compounded values from `values` and `set*` attributes |
-| <a name="output_helm_release_irsa_version"></a> [helm\_release\_irsa\_version](#output\_helm\_release\_irsa\_version) | A SemVer 2 conformant version string of the chart |
-| <a name="output_helm_release_only_app_version"></a> [helm\_release\_only\_app\_version](#output\_helm\_release\_only\_app\_version) | The version number of the application being deployed |
-| <a name="output_helm_release_only_chart"></a> [helm\_release\_only\_chart](#output\_helm\_release\_only\_chart) | The name of the chart |
-| <a name="output_helm_release_only_iam_role_arn"></a> [helm\_release\_only\_iam\_role\_arn](#output\_helm\_release\_only\_iam\_role\_arn) | ARN of IAM role |
-| <a name="output_helm_release_only_iam_role_name"></a> [helm\_release\_only\_iam\_role\_name](#output\_helm\_release\_only\_iam\_role\_name) | Name of IAM role |
-| <a name="output_helm_release_only_iam_role_path"></a> [helm\_release\_only\_iam\_role\_path](#output\_helm\_release\_only\_iam\_role\_path) | Path of IAM role |
-| <a name="output_helm_release_only_iam_role_unique_id"></a> [helm\_release\_only\_iam\_role\_unique\_id](#output\_helm\_release\_only\_iam\_role\_unique\_id) | Unique ID of IAM role |
-| <a name="output_helm_release_only_name"></a> [helm\_release\_only\_name](#output\_helm\_release\_only\_name) | Name is the name of the release |
-| <a name="output_helm_release_only_namespace"></a> [helm\_release\_only\_namespace](#output\_helm\_release\_only\_namespace) | Name of Kubernetes namespace |
-| <a name="output_helm_release_only_revision"></a> [helm\_release\_only\_revision](#output\_helm\_release\_only\_revision) | Version is an int32 which represents the version of the release |
-| <a name="output_helm_release_only_values"></a> [helm\_release\_only\_values](#output\_helm\_release\_only\_values) | The compounded values from `values` and `set*` attributes |
-| <a name="output_helm_release_only_version"></a> [helm\_release\_only\_version](#output\_helm\_release\_only\_version) | A SemVer 2 conformant version string of the chart |
-| <a name="output_irsa_only_app_version"></a> [irsa\_only\_app\_version](#output\_irsa\_only\_app\_version) | The version number of the application being deployed |
-| <a name="output_irsa_only_chart"></a> [irsa\_only\_chart](#output\_irsa\_only\_chart) | The name of the chart |
-| <a name="output_irsa_only_iam_role_arn"></a> [irsa\_only\_iam\_role\_arn](#output\_irsa\_only\_iam\_role\_arn) | ARN of IAM role |
-| <a name="output_irsa_only_iam_role_name"></a> [irsa\_only\_iam\_role\_name](#output\_irsa\_only\_iam\_role\_name) | Name of IAM role |
-| <a name="output_irsa_only_iam_role_path"></a> [irsa\_only\_iam\_role\_path](#output\_irsa\_only\_iam\_role\_path) | Path of IAM role |
-| <a name="output_irsa_only_iam_role_unique_id"></a> [irsa\_only\_iam\_role\_unique\_id](#output\_irsa\_only\_iam\_role\_unique\_id) | Unique ID of IAM role |
-| <a name="output_irsa_only_name"></a> [irsa\_only\_name](#output\_irsa\_only\_name) | Name is the name of the release |
-| <a name="output_irsa_only_namespace"></a> [irsa\_only\_namespace](#output\_irsa\_only\_namespace) | Name of Kubernetes namespace |
-| <a name="output_irsa_only_revision"></a> [irsa\_only\_revision](#output\_irsa\_only\_revision) | Version is an int32 which represents the version of the release |
-| <a name="output_irsa_only_values"></a> [irsa\_only\_values](#output\_irsa\_only\_values) | The compounded values from `values` and `set*` attributes |
-| <a name="output_irsa_only_version"></a> [irsa\_only\_version](#output\_irsa\_only\_version) | A SemVer 2 conformant version string of the chart |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+    NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP                                                                     PORT(S)                                      AGE
+    service/istio-ingress   LoadBalancer   172.20.104.27   k8s-istioing-istioing-844c89b6c2-875b8c9a4b4e9365.elb.us-west-2.amazonaws.com   15021:32760/TCP,80:31496/TCP,443:32534/TCP   4m28s
+    ```
 
-Apache-2.0 Licensed. See [LICENSE](https://github.com/aws-ia/terraform-aws-eks-blueprints-addon/blob/main/LICENSE).
+2. Verify all the Helm releases installed in the `istio-system` and `istio-ingress` namespaces:
+
+    ```sh
+    helm list -n istio-system
+    ```
+
+    ```text
+    NAME           NAMESPACE    REVISION UPDATED                              STATUS   CHART          APP VERSION
+    istio-base    istio-system 1        2023-07-19 11:05:41.599921 -0700 PDT deployed base-1.18.1    1.18.1
+    istiod        istio-system 1        2023-07-19 11:05:48.087616 -0700 PDT deployed istiod-1.18.1  1.18.1
+    ```
+
+    ```sh
+    helm list -n istio-ingress
+    ```
+
+    ```text
+    NAME           NAMESPACE    REVISION UPDATED                              STATUS   CHART          APP VERSION
+    istio-ingress istio-ingress 1        2023-07-19 11:06:03.41609 -0700 PDT  deployed gateway-1.18.1 1.18.1
+    ```
+
+```sh
+# Visualize Istio Mesh console using Kiali
+kubectl port-forward svc/kiali 20001:20001 -n istio-system
+
+# Get to the Prometheus UI
+kubectl port-forward svc/prometheus 9090:9090 -n istio-system
+
+# Visualize metrics in using Grafana
+kubectl port-forward svc/grafana 3000:3000 -n istio-system
+
+# Visualize application traces via Jaeger
+kubectl port-forward svc/jaeger 16686:16686 -n istio-system
+```
+
+
+### Observation about Istio on Fargate
+
+```text
+There seems to be an issue when integrating Karpenter with resources, especially in a Fargate or managed node-based EKS cluster setup. 
+Istio and the AWS Load Balancer Controller require access to underlying EC2 nodes, and deploying them with Fargate profiles may cause networking issues. The webhook service for the AWS Load Balancer Controller might be failing because of Fargate limitations.
+
+Solution: Istio is more likely to work smoothly with EC2-backed worker nodes (managed or via Karpenter). Ensure that:
+
+Istio pods (especially istiod and istio-ingressgateway) are scheduled on EC2-backed nodes instead of Fargate.
+Karpenter should be configured to ensure the correct nodes are provisioned for the workloads that cannot run on Fargate.
+Ensure Istio and AWS Load Balancer Controller run on EC2 instances provisioned by Karpenter, using node selectors, taints, or tolerations.
+Confirm that Karpenter is properly provisioning nodes with the required capacity (e.g., instance types m5.large).
+Ensure the AWS Load Balancer Controller is installed and functioning correctly on EC2 nodes to avoid webhook errors.
+Double-check network policies and security groups to make sure the required ports for Istio communication are open.
+By addressing these potential conflicts between Fargate and EC2-backed workloads, your integration with Karpenter should work more smoothly.
+```

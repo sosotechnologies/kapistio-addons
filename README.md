@@ -1,29 +1,38 @@
+# Amazon EKS Blueprints Addon Tests
 
-terraform plan 
-terraform plan -out=tfplan -json > plan_output.json
-tofu apply tfplan
+Configuration in this directory provisions:
+- An EKS cluster and VPC 
+- An addon (Helm release) for [`metrics-server`](https://github.com/kubernetes-sigs/metrics-server) without an IAM role for service account (IRSA)
+- An addon (Helm release) for [`karpenter`](https://github.com/aws/karpenter) with an IAM role for service account (IRSA)
+- An addon (Helm release) for [`Istio`](https://github.com/aws/karpenter) 
+  * Install Istio Ingress Gateway using Helm resources in tofu
+  * This step deploys a Service of type `LoadBalancer` that creates an AWS Network Load Balancer.
+  * Deploy/Validate Istio communication using sample application
+- An IAM role for service account (IRSA) suitable for use by the [AWS VPC-CNI](https://github.com/aws/amazon-vpc-cni-k8s)
 
+Refer to the [documentation](https://istio.io/latest/docs/concepts/) on Istio
+concepts.
 
-aws eks --region us-east-1 update-kubeconfig --name kukuruuku
+## Usage
 
-####### For Istio ##################
-NOTE : THis will be the service account IRSA Role for webIdentity: karpenter-controller
+To run this example you need to execute:
 
-```sh
-tofu init
-tofu apply --auto-approve
+```bash
+$ tofu init
+$ tofu plan
+$ tofu apply #--auto-approve
 ```
 
-kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
-
-
+###  For Istio
 Once the resources have been provisioned, you will need to replace the `istio-ingress` pods due to a [`istiod` dependency issue](https://github.com/istio/istio/issues/35789). Use the following command to perform a rolling restart of the `istio-ingress` pods:
 
 ```sh
 kubectl rollout restart deployment istio-ingress -n istio-ingress
+
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
 ```
 
-### Observability Add-ons
+#### Other Istio OPTIONAL Addons - Observability Add-ons
 
 Use the following code snippet to add the Istio Observability Add-ons on the EKS
 cluster with deployed Istio.
@@ -36,7 +45,7 @@ do
 done
 ```
 
-## Validate
+***Validate***
 
 1. List out all pods and services in the `istio-system` namespace:
 
@@ -90,13 +99,6 @@ done
     istio-ingress istio-ingress 1        2023-07-19 11:06:03.41609 -0700 PDT  deployed gateway-1.18.1 1.18.1
     ```
 
-### Observability Add-ons
-
-Validate the setup of the observability add-ons by running the following commands
-and accessing each of the service endpoints using this URL of the form
-[http://localhost:\<port>](http://localhost:<port>) where `<port>` is one of the
-port number for the corresponding service.
-
 ```sh
 # Visualize Istio Mesh console using Kiali
 kubectl port-forward svc/kiali 20001:20001 -n istio-system
@@ -111,234 +113,20 @@ kubectl port-forward svc/grafana 3000:3000 -n istio-system
 kubectl port-forward svc/jaeger 16686:16686 -n istio-system
 ```
 
-# Karpenter on EKS Fargate
 
-This pattern demonstrates how to provision Karpenter on a serverless cluster (serverless data plane) using Fargate Profiles.
+### Observation about Istio on Fargate
 
-## Deploy
+```text
+There seems to be an issue when integrating Karpenter with resources, especially in a Fargate or managed node-based EKS cluster setup. 
+Istio and the AWS Load Balancer Controller require access to underlying EC2 nodes, and deploying them with Fargate profiles may cause networking issues. The webhook service for the AWS Load Balancer Controller might be failing because of Fargate limitations.
 
-See [here](https://aws-ia.github.io/terraform-aws-eks-blueprints/getting-started/#prerequisites) for the prerequisites and steps to deploy this pattern.
+Solution: Istio is more likely to work smoothly with EC2-backed worker nodes (managed or via Karpenter). Ensure that:
 
-## Validate
-
-1. Test by listing the nodes in the cluster. You should see four Fargate nodes in the cluster:
-
-    ```sh
-    kubectl get nodes
-
-    NAME                                                STATUS   ROLES    AGE     VERSION
-    fargate-ip-10-0-11-195.us-west-2.compute.internal   Ready    <none>   5m20s   v1.28.2-eks-f8587cb
-    fargate-ip-10-0-27-183.us-west-2.compute.internal   Ready    <none>   5m2s    v1.28.2-eks-f8587cb
-    fargate-ip-10-0-4-169.us-west-2.compute.internal    Ready    <none>   5m3s    v1.28.2-eks-f8587cb
-    fargate-ip-10-0-44-106.us-west-2.compute.internal   Ready    <none>   5m12s   v1.28.2-eks-f8587cb
-    ```
-
-2. Provision the Karpenter `EC2NodeClass` and `NodePool` resources which provide Karpenter the necessary configurations to provision EC2 resources:
-
-    ```sh
-    kubectl apply -f karpenter.yaml
-    ```
-
-3. Once the Karpenter resources are in place, Karpenter will provision the necessary EC2 resources to satisfy any pending pods in the scheduler's queue. You can demonstrate this with the example deployment provided. First deploy the example deployment which has the initial number replicas set to 0:
-
-    ```sh
-    kubectl apply -f example.yaml
-    ```
-
-4. When you scale the example deployment, you should see Karpenter respond by quickly provisioning EC2 resources to satisfy those pending pod requests:
-
-    ```sh
-    kubectl scale deployment inflate --replicas=3
-    ```
-
-5. Listing the nodes should now show some EC2 compute that Karpenter has created for the example deployment:
-
-    ```sh
-    kubectl get nodes
-
-    NAME                                                STATUS   ROLES    AGE   VERSION
-    fargate-ip-10-0-11-195.us-west-2.compute.internal   Ready    <none>   13m   v1.28.2-eks-f8587cb
-    fargate-ip-10-0-27-183.us-west-2.compute.internal   Ready    <none>   12m   v1.28.2-eks-f8587cb
-    fargate-ip-10-0-4-169.us-west-2.compute.internal    Ready    <none>   12m   v1.28.2-eks-f8587cb
-    fargate-ip-10-0-44-106.us-west-2.compute.internal   Ready    <none>   13m   v1.28.2-eks-f8587cb
-    ip-10-0-32-199.us-west-2.compute.internal           Ready    <none>   29s   v1.28.2-eks-a5df82a # <== EC2 created by Karpenter
-    ```
-
-## Destroy
-
-Scale down the deployment to de-provision Karpenter created resources first:
-
-```sh
-kubectl delete -f example.yaml
+Istio pods (especially istiod and istio-ingressgateway) are scheduled on EC2-backed nodes instead of Fargate.
+Karpenter should be configured to ensure the correct nodes are provisioned for the workloads that cannot run on Fargate.
+Ensure Istio and AWS Load Balancer Controller run on EC2 instances provisioned by Karpenter, using node selectors, taints, or tolerations.
+Confirm that Karpenter is properly provisioning nodes with the required capacity (e.g., instance types m5.large).
+Ensure the AWS Load Balancer Controller is installed and functioning correctly on EC2 nodes to avoid webhook errors.
+Double-check network policies and security groups to make sure the required ports for Istio communication are open.
+By addressing these potential conflicts between Fargate and EC2-backed workloads, your integration with Karpenter should work more smoothly.
 ```
-
-{%
-   include-markdown "../../docs/_partials/destroy.md"
-%}
-
-
-
-############## For IRSA ###########################
-# Amazon EKS Blueprints Addon tofu module
-
-tofu module which provisions an addon ([Helm release](https://registry.tofu.io/providers/hashicorp/helm/latest/docs/resources/release)) and an [IAM role for service accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
-
-## Usage
-
-### Create Addon (Helm Release) w/ IAM Role for Service Account (IRSA)
-
-```hcl
-module "eks_blueprints_addon" {
-  source = "aws-ia/eks-blueprints-addon/aws"
-  version = "~> 1.0" #ensure to update this to the latest/desired version
-
-  chart            = "karpenter"
-  chart_version    = "0.16.2"
-  repository       = "https://charts.karpenter.sh/"
-  description      = "Kubernetes Node Autoscaling: built for flexibility, performance, and simplicity"
-  namespace        = "karpenter"
-  create_namespace = true
-
-  set = [
-    {
-      name  = "clusterName"
-      value = "eks-blueprints-addon-example"
-    },
-    {
-      name  = "clusterEndpoint"
-      value = "https://EXAMPLED539D4633E53DE1B71EXAMPLE.gr7.us-east-1.eks.amazonaws.com"
-    },
-    {
-      name  = "aws.defaultInstanceProfile"
-      value = "arn:aws:iam::111111111111:instance-profile/KarpenterNodeInstanceProfile-complete"
-    }
-  ]
-
-  set_irsa_names = ["serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"]
-  # # Equivalent to the following but the ARN is only known internally to the module
-  # set = [{
-  #   name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-  #   value = iam_role_arn.this[0].arn
-  # }]
-
-  # IAM role for service account (IRSA)
-  create_role = true
-  role_name   = "karpenter-controller"
-  role_policies = {
-    karpenter = "arn:aws:iam::111111111111:policy/Karpenter_Controller_Policy-20221008165117447500000007"
-  }
-
-  oidc_providers = {
-    this = {
-      provider_arn = "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
-      # namespace is inherited from chart
-      service_account = "karpenter"
-    }
-  }
-
-  tags = {
-    Environment = "dev"
-  }
-}
-```
-
-### Create Addon (Helm Release) Only
-
-```hcl
-module "eks_blueprints_addon" {
-  source = "aws-ia/eks-blueprints-addon/aws"
-  version = "~> 1.0" #ensure to update this to the latest/desired version
-
-  chart         = "metrics-server"
-  chart_version = "3.8.2"
-  repository    = "https://kubernetes-sigs.github.io/metrics-server/"
-  description   = "Metric server helm Chart deployment configuration"
-  namespace     = "kube-system"
-
-  values = [
-    <<-EOT
-      podDisruptionBudget:
-        maxUnavailable: 1
-      metrics:
-        enabled: true
-    EOT
-  ]
-
-  set = [
-    {
-      name  = "replicas"
-      value = 3
-    }
-  ]
-}
-```
-
-### Create IAM Role for Service Account (IRSA) Only
-
-```hcl
-module "eks_blueprints_addon" {
-  source = "aws-ia/eks-blueprints-addon/aws"
-  version = "~> 1.0" #ensure to update this to the latest/desired version
-
-  # Disable helm release
-  create_release = false
-
-  # IAM role for service account (IRSA)
-  create_role = true
-  create_policy = false
-  role_name   = "aws-vpc-cni-ipv4"
-  role_policies = {
-    AmazonEKS_CNI_Policy = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  }
-
-  oidc_providers = {
-    this = {
-      provider_arn    = "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
-      namespace       = "kube-system"
-      service_account = "aws-node"
-    }
-  }
-
-  tags = {
-    Environment = "dev"
-  }
-}
-```
-
-<!-- BEGINNING OF PRE-COMMIT-tofu DOCS HOOK -->
-## Requirements
-
-| Name | Version |
-|------|---------|
-| <a name="requirement_tofu"></a> [tofu](#requirement\_tofu) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.47 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.47 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.9 |
-
-## Modules
-
-No modules.
-
-## Resources
-
-| Name | Type |
-|------|------|
-| [aws_iam_policy.this](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.this](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.additional](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.this](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [helm_release.this](https://registry.tofu.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
-| [aws_caller_identity.current](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.assume](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.this](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_partition.current](https://registry.tofu.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
-
-
-
---target=aws_security_group.custom_sg
