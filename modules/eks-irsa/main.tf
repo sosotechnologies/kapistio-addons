@@ -108,7 +108,6 @@ data "aws_iam_policy_document" "assume" {
   count = local.create_role ? 1 : 0
 
   dynamic "statement" {
-    # https://aws.amazon.com/blogs/security/announcing-an-update-to-iam-role-trust-policy-behavior/
     for_each = var.allow_self_assume_role ? [1] : []
 
     content {
@@ -147,7 +146,6 @@ data "aws_iam_policy_document" "assume" {
         values   = ["system:serviceaccount:${try(statement.value.namespace, local.namespace)}:${statement.value.service_account}"]
       }
 
-      # https://aws.amazon.com/premiumsupport/knowledge-center/eks-troubleshoot-oidc-and-irsa/?nc1=h_ls
       condition {
         test     = var.assume_role_condition_test
         variable = "${replace(statement.value.provider_arn, "/^(.*provider/)/", "")}:aud"

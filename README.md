@@ -23,6 +23,10 @@ $ tofu plan
 $ tofu apply #--auto-approve
 ```
 
+```sh
+aws eks --region us-east-1 update-kubeconfig --name route53-with-intelli-w-irsa
+```
+
 ###  For Istio
 Once the resources have been provisioned, you will need to replace the `istio-ingress` pods due to a [`istiod` dependency issue](https://github.com/istio/istio/issues/35789). Use the following command to perform a rolling restart of the `istio-ingress` pods:
 
