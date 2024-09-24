@@ -3,12 +3,12 @@ kind: VirtualService
 metadata:
   labels:
   name: longhorn-vs
-  namespace: longhorn-system
+  namespace: nginx
 spec:
   gateways:
   - istio-system/general-gateway
   hosts:
-  - 'longhorns.sosotech.io'
+  - 'nginx.globalwealthorder.com'
   http:
   - retries:
       attempts: 3
@@ -18,6 +18,6 @@ spec:
         prefix: /
     route:
     - destination:
-        host: longhorn-frontend
+        host: nginx
         port:
           number: 80
