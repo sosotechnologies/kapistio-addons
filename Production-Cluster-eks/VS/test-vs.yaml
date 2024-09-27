@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3 #networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: test
+  # namespace: argocd
+spec:
+  gateways:
+    - istio-system/general-gateway
+  hosts:
+    - test.globalwealthorder.com
+  http:
+    - route:
+      - destination:
+          host: test
+          port:
+            number: 80
