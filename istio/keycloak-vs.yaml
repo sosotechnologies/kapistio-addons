@@ -1,0 +1,23 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+  name: keycloak
+  namespace: keycloak
+spec:
+  gateways:
+  - istio-system/general-gateway
+  hosts:
+  - 'keycloak.sosotech.io'
+  http:
+  - retries:
+      attempts: 3
+      perTryTimeout: 2s
+    match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: keycloak-http
+        port:
+          number: 80
