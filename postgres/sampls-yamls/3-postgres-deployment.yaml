@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-postgresql
+  template:
+    metadata:
+      labels:
+        app: sonarqube-postgresql
+    spec:
+      containers:
+      - name: postgres
+        image: cafanwii/postgres:1.0.0
+        env:
+        - name: POSTGRES_HOST
+          value: "10.0.0.36"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "cafanwii-db1"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+      #   # adding-pv-volume
+      #   volumeMounts:
+      #   - name: postgresql-data
+      #     mountPath: /var/lib/postgresql/data
+      # volumes:
+      # - name: postgresql-data
+      #   persistentVolumeClaim:
+      #     claimName: sonarqube-postgresql-pv-claim
