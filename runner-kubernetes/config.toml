@@ -1,0 +1,26 @@
+concurrent = 30
+check_interval = 30
+
+[[runners]]
+  name = "kubernetes-saturday"
+  url = "https://gitlab.com/"
+  token = ""
+  executor = "kubernetes"
+  [runners.kubernetes]
+    bearer_token_overwrite_allowed = false
+    image = "cafanwii/runners-runner:alpha.1"
+    namespace = "gitlab-runner"
+    pull_policy = "always"
+    cpu_limit = "4800m"
+    cpu_request = "390m"
+    memory_limit = "9Gi"
+    memory_request = "637Mi"
+    helper_cpu_limit = "2500m"
+    helper_cpu_request = "41m"
+    helper_memory_limit = "800Mi"
+    helper_memory_request = "74Mi"
+    cpu_limit = "1400m"
+    cpu_request = "21m"
+    memory_limit = "310Mi"
+    memory_request = "4Mi"
+[runners.cache]
