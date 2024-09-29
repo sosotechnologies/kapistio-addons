@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:25.0.0
+          env:
+            - name: KEYCLOAK_USER
+              value: admin
+            - name: KEYCLOAK_PASSWORD
+              value: admin
+            - name: PROXY_ADDRESS_FORWARDING
+              value: "true"
+          ports:
+            - containerPort: 8080
+            - containerPort: 8443
+          volumeMounts:
+            - name: tls-secret
+              mountPath: /etc/x509/https
+              readOnly: true
+            - name: keycloak-storage
+              mountPath: /opt/jboss/keycloak/standalone/data
+      volumes:
+        - name: tls-secret
+          secret:
+            secretName: keycloak-tls
+        - name: keycloak-storage
+          persistentVolumeClaim:
+            claimName: keycloak-pvc
