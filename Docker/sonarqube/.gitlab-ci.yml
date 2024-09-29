@@ -1,0 +1,19 @@
+stages:
+  - build
+
+build_and_push_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_IMAGE_NAME: "cafanwii/sonarqube"
+    DOCKER_REGISTRY: "docker.io"
+  before_script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME .
+    - docker tag $DOCKER_IMAGE_NAME $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:1.0.0
+    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:1.0.0
+  only:
+    - main
