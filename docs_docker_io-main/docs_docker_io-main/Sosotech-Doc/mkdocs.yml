@@ -1,0 +1,95 @@
+site_name: SosoTech External Documentation
+site_description: SosoTech External Documentation for Tenants
+repo_name: soso_technologies_macaz_doc.io
+site_url: https://sosotechnologies.github.io/soso_technologies_macaz_doc.io/
+repo_url: https://github.com/sosotechnologies/soso_technologies_macaz_doc.io
+edit_uri: https://github.com/sosotechnologies/soso_technologies_macaz_doc.io/repo/blob/main/docs/index.md
+copyright: SosoTech LLC - Documentation
+
+theme:
+  name: 'material'
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  # icon:
+  #   #logo: assets/logo.svg
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+extra_css:
+  - assets/stylesheets/extra.css
+extra_javascript:
+  - assets/javascripts/extra.js
+
+# extra:
+#   social:
+#     - type: github
+#       link: https://github.com/sosotechnologies/
+#     - type: medium
+#       link: https://medium.com/@sosotechglobal/
+
+markdown_extensions:
+  - markdown.extensions.admonition
+
+nav:
+  - Home:
+      - About Us: index.md
+  - Getting Started:
+      - Local Installation: Getting-Started/local-install.md
+      - Remote Installation: Getting-Started/remote-install.md
+  - Weekly Lectures:
+      - CICD: weekly/CICD/cicd.md
+      - Cloud Technologies: weekly/Cloud-Technologies/intro-aws.md
+      - Docker: weekly/Docker/docker.md
+      - ELK: weekly/ELK/elk.md
+      - GitHub: weekly/GitHub/github.md
+      - GitHub Action: weekly/Gitaction/gitaction.md
+      - Jenkins: weekly/Jenkins/jenkins.md
+      - Kubernetes: weekly/Kubernetes/kubernetes.md
+      - AI: weekly/AI/ai.md
+      - OpenShift: weekly/Openshift/openshift.md
+      - Terraform: weekly/Terraform/terraform.md
+  - Random Topics:
+      - 3 Tier App: weekly/Random/3tier.md
+      - Kubernetes API: weekly/Random/k8sapi.md
+      - OS Types Commands: weekly/Random/operating-systems.md
+      - EKS-IAM: weekly/Random/eks-iam.md
+      - Git-ECR-Jenkins: weekly/Random/git-ecr-jenkins.md
+      - Helm-Terraform-Jenkins: weekly/Random/Helm-Terraform-jenkins.md
+  - Week 2:
+      - ELK: weekly/week2/elk.md
