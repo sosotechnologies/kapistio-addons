@@ -1,0 +1,140 @@
+Listing your Kapistio product on AWS Marketplace requires multiple steps to ensure your product is properly packaged, priced, and marketed. Here’s a step-by-step guide to help you navigate the process:
+
+1. Register as a Seller on AWS Marketplace
+AWS Seller Registration: Ensure you’re registered as a seller on AWS Marketplace. This requires having an AWS account and agreeing to the terms of the AWS Marketplace Seller Agreement.
+Complete Tax and Banking Info: AWS requires details like your tax information and banking details for payments.
+2. Choose a Product Delivery Method
+Delivery Methods: AWS supports various delivery options depending on how your customers will use your product. Since Kapistio is a data-processing tool, one of the following methods may be relevant:
+Single AMI (Amazon Machine Image): Your application is packaged as an AMI that customers can deploy as an EC2 instance.
+AMI with AWS CloudFormation Template: Use AWS CloudFormation to deploy complex applications using a predefined template.
+SaaS (Software as a Service): If Kapistio is a hosted service (cloud-native), you could offer it as a SaaS product where customers access the service directly without needing to manage infrastructure.
+Containers (Docker): If Kapistio runs in containers, AWS allows you to offer a container-based solution through Amazon Elastic Container Service (ECS), AWS Fargate, or Kubernetes.
+Key Consideration: You need to decide which method suits your product architecture and how customers will interact with Kapistio.
+
+3. Prepare the Product
+Build an AMI or Container: If you’re offering an AMI or container-based solution, ensure that the application is preconfigured, secured, and fully functional in the AMI or container.
+Write Documentation: Prepare comprehensive documentation, including:
+User Guides: Step-by-step instructions for deploying and using your product.
+Usage Instructions: Detail how customers can access and interact with Kapistio.
+End User License Agreement (EULA): Clearly define the legal terms under which customers can use your product.
+4. Product Pricing
+Standard Pricing: Determine a competitive pricing model. AWS supports:
+Hourly pricing for AMI-based products (e.g., per EC2 instance hour).
+Annual or monthly subscriptions for SaaS-based or long-term commitments.
+Container pricing based on the infrastructure used (e.g., ECS or EKS clusters).
+Custom Private Offers: You can create private offers with specific pricing or terms for individual customers.
+Cost of Data Processing: If Kapistio involves data processing, factor in additional costs for compute, storage, and transfer.
+Competitive Pricing: Research similar products (e.g., Mphasis Image Based 3D Modelling) to set competitive rates. You can offer tiered pricing for different levels of usage or features.
+
+5. Regions and Countries
+Choose Supported Regions: Decide which AWS regions will host your product. Ensure your application complies with data regulations and performance needs for your target markets.
+International Availability: If you're selling internationally, consider currency differences, taxes, and legal regulations for different countries.
+6. Standardized Contracts and Licenses
+Use Standard Contracts: AWS Marketplace allows the use of standardized contracts for easier procurement and consistent legal terms.
+Custom EULA: You can include a custom EULA if your product has specific legal terms.
+7. Categories and Metadata
+Select Relevant Categories: Choose the appropriate categories for Kapistio in the AWS Marketplace (e.g., Data Analytics, Machine Learning, 3D Modelling).
+Add Metadata and Keywords: Optimize the product’s discoverability by adding relevant metadata, including:
+Keywords (e.g., data processing, image-based modeling, 3D tools).
+Descriptions that appeal to your target customers.
+8. Product SEO (Search Engine Optimization)
+SEO Best Practices: Ensure your product description is optimized for search engines to increase visibility on AWS Marketplace. Use strategic keywords, concise descriptions, and highlight Kapistio’s key features.
+9. Create and Submit Your Product
+Package Your Product: Finalize your AMI, container, or SaaS configuration. Ensure all files, security configurations, and optimizations are in place.
+Upload to AWS Marketplace: Submit the product package through the AWS Marketplace management portal. AWS will review the package for compliance and functionality.
+10. AWS Marketplace Review and Approval
+Compliance Check: AWS will review your product to ensure it meets technical and security standards.
+Fix Feedback: Address any feedback or issues raised during the review process.
+Final Approval: Once AWS approves your product, it will go live in the marketplace.
+11. Marketing and Customer Support
+Customer Support: Set up a system for handling customer queries or issues, such as a support email or AWS ticketing system.
+Promote Your Product: Use AWS’s marketing tools or partner with AWS to promote Kapistio to a wider audience.
+Summary Checklist:
+Register as AWS Marketplace Seller.
+Choose Product Delivery Method (AMI, Container, SaaS).
+Package the Product (e.g., build AMI, container).
+Determine Competitive Pricing (standard, custom offers).
+Select Regions for Deployment.
+Prepare Documentation (user guide, usage instructions).
+Set License Terms (EULA, standardized contracts).
+Optimize Metadata and SEO for discoverability.
+Submit Product for AWS Review.
+Launch and Promote.
+Each of these steps will guide you through successfully listing Kapistio on AWS Marketplace with a competitive pricing model and ensure it’s well-positioned for customers.
+
+
+### Delivery details
+When listing your product on AWS Marketplace, there are different product delivery methods to choose from based on how your customers will access and use your product. These include Onsite, Hybrid, and various Cloud-based delivery models. Here's a detailed explanation of each method:
+
+1. Onsite Delivery (On-Premises Deployment)
+Definition: In an onsite delivery model, the product is delivered to the customer for installation and management within their own data center or on-premises infrastructure. This is commonly used for software that needs to run on customer-controlled hardware for compliance, security, or performance reasons.
+
+Use Case: Customers with strict data governance, security requirements, or those who manage sensitive data that cannot leave their own infrastructure.
+Example: Software packages that are distributed as virtual machine images (e.g., VMware, Hyper-V) or as containerized applications that customers deploy to their own data centers.
+AWS Marketplace Representation: AWS Marketplace primarily focuses on cloud-based products. However, some vendors provide downloadable virtual appliances or packages that can be deployed on-premises after purchasing through the marketplace.
+2. Cloud-Based Delivery Methods
+This is the most common method for products listed on AWS Marketplace, leveraging AWS cloud infrastructure. Here are several types of cloud-based delivery:
+
+a) Amazon Machine Image (AMI)
+Definition: An AMI is a pre-configured virtual machine image that can be launched on Amazon EC2 (Elastic Compute Cloud). Customers can launch an EC2 instance with your AMI, which includes your application already installed and ready to use.
+
+Use Case: When your product is a single application or service that runs on a virtual machine.
+Example: Software like databases, application servers, or development environments.
+Benefits: Easy deployment on AWS, flexibility in configuration, and scalability as customers can launch multiple instances as needed.
+b) AMI Delivered via AWS CloudFormation Template
+Definition: AWS CloudFormation templates allow you to automate the setup of an entire infrastructure stack. With this delivery method, the product is an AMI that is deployed using a CloudFormation template, which can automatically configure all required resources (e.g., EC2 instances, load balancers, security groups).
+
+Use Case: Complex products that require multiple AWS resources to function, such as multi-tier applications or clustered environments.
+Example: Deploying a distributed application that needs EC2 instances, databases, and network configurations.
+Benefits: Simplifies the deployment of complex infrastructures and ensures consistency across deployments.
+c) Software as a Service (SaaS)
+Definition: In the SaaS model, the software is hosted and managed by the provider (you) and is accessed by customers over the internet. AWS Marketplace customers subscribe to your SaaS application, and AWS handles the billing.
+
+Use Case: Fully hosted services where customers do not need to manage any infrastructure. Ideal for web-based applications, platforms, or services that customers access directly via a web interface or API.
+Example: Data analytics platforms, CRMs (Customer Relationship Management), or image-processing tools like your Kapistio.
+Benefits: No need for customers to manage infrastructure, automatic updates and scaling, easy for customers to access and use.
+d) Container-Based Delivery (ECS/EKS)
+Definition: Container-based delivery uses Docker or other container technologies to package your application. AWS customers can run these containers on services like Amazon ECS (Elastic Container Service) or Amazon EKS (Elastic Kubernetes Service).
+
+Use Case: Modern applications that are containerized, offering portability, scalability, and microservices architecture.
+Example: Microservice-based applications or machine learning models that run in containers.
+Benefits: Lightweight, portable, easily scalable across environments. Containers can be run on different platforms like ECS, EKS, or even on-premises using Kubernetes.
+e) SaaS Contract
+Definition: SaaS contracts allow customers to subscribe to your SaaS offering on a recurring basis (monthly, annually, or custom terms). Pricing can be based on seats, usage, or other metrics.
+
+Use Case: Long-term subscriptions where customers prefer stable, predictable billing. It's often used when customers need to commit to using your service for an extended period.
+Example: A cloud-hosted data processing platform like Kapistio, where customers subscribe based on the volume of data processed or number of users.
+Benefits: Recurring revenue stream, more stable and predictable for both sellers and buyers.
+3. Hybrid Delivery (On-Premises + Cloud)
+Definition: A hybrid delivery method combines both on-premises and cloud elements. Customers use a combination of cloud-based resources and their own on-premises infrastructure. For example, your software could process data on customer-owned hardware while offloading certain tasks (e.g., storage or computation) to the cloud.
+
+Use Case: When customers need local data processing but want to use the scalability of the cloud for more resource-intensive tasks or for storage/backup purposes.
+Example: A data processing tool that customers deploy on-premises but also integrates with AWS for storage or high-performance compute (e.g., machine learning models).
+Benefits: Allows customers to retain control over sensitive data on-premises while leveraging the flexibility and scalability of cloud resources.
+4. Bring Your Own License (BYOL)
+Definition: In the BYOL model, customers bring their existing software licenses and deploy them on AWS infrastructure. The AWS Marketplace product acts as a facilitator for deploying licensed software.
+
+Use Case: For software companies that already sell software licenses but want to allow customers to deploy it in the cloud without requiring a new licensing purchase.
+Example: Customers purchase software licenses directly from your company and then use the product on AWS using their existing license.
+Benefits: Flexibility for customers to use existing licenses, and you can cater to customers who already have a relationship with your company outside of AWS.
+5. Professional Services
+Definition: Some products are sold with professional services included. This means customers buy both the software and the associated services, such as installation, configuration, training, or support.
+
+Use Case: Complex software that requires custom deployment, configuration, or training for customers.
+Example: A large enterprise deployment of data processing software like Kapistio that requires custom integrations or assistance from your team for initial setup.
+Benefits: Added value for customers who need hands-on assistance, creates additional revenue from services.
+Summary of Delivery Methods:
+Onsite (On-Premises): Installed and run on the customer’s hardware.
+Cloud-Based:
+AMI: Virtual machine images for deployment on EC2.
+CloudFormation Template: Automated infrastructure deployment.
+SaaS: Hosted service accessed by customers over the internet.
+Container Delivery: Applications running in Docker containers deployed on ECS, EKS, or Kubernetes.
+Hybrid: Combines on-premises infrastructure with cloud resources.
+Bring Your Own License (BYOL): Customers deploy licensed software they already own.
+Professional Services: Include services like installation, configuration, or training with the product.
+Choosing the Right Delivery Model for Kapistio:
+If Kapistio is primarily a cloud-based tool that customers will access through the internet, the SaaS model is ideal.
+If Kapistio needs to be deployed as a virtual machine or container, use the AMI or container-based delivery methods.
+For customers who want to process sensitive data in their own data centers but still use cloud resources for certain tasks, consider a hybrid delivery model.
+Each of these methods offers unique advantages based on your product’s architecture and the preferences of your customers.
