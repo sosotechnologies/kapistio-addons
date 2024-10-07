@@ -91,4 +91,39 @@ kubectl logs -l app.kubernetes.io/name=karpenter -n karpenter
 kubectl describe deployment test-app
 kubectl get nodes
 
+### I seen errors, So
+- I may have to change the deploy to:
+
+- ```yaml
+  apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: default
+spec:
+  requirements:
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["on-demand", "spot"]
+  limits:
+    resources:
+      cpu: 1000m
+      memory: "2Gi"
+  provider:
+    # Specify the cloud provider settings here
+    instanceProfile: <YourInstanceProfile> # Use your specific instance profile
+    subnetSelector:
+      # Define subnets for your nodes
+      karpenter.sh/discovery: <YourVPCID>
+    securityGroupSelector:
+      # Define security groups for your nodes
+      karpenter.sh/discovery: <YourVPCID>
+```
+
+
+and later
+
+kubectl get validatingwebhookconfiguration
+kubectl get pods -n karpenter
+
+
 
