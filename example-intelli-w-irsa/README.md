@@ -82,11 +82,13 @@ Networking Configuration:
 Make sure your networking settings (security groups, route tables) allow Karpenter to communicate with the required AWS services and Kubernetes.
 Debugging Logs:
 
-Check Karpenter logs for any error messages or issues by running:
-bash
-Copy code
 kubectl logs deployment/karpenter -n karpenter
-Additional Suggestions
-Documentation: Review Karpenter's official documentation for any specific requirements or configurations that might not be covered in your setup.
-Testing: Deploy a simple workload and monitor Karpenter's behavior in provisioning nodes based on the workload requirements.
-If you have specific areas where you need help or if there's a particular issue you're facing, let me know!
+
+## create sample deploy named:  test-app
+Then see the logs
+
+kubectl logs -l app.kubernetes.io/name=karpenter -n karpenter
+kubectl describe deployment test-app
+kubectl get nodes
+
+
